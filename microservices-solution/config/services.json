@@ -1,0 +1,14 @@
+{
+  "Customers": {
+    "BaseUrl": "http://localhost:5000"
+  },
+  "Products": {
+    "BaseUrl": "http://localhost:5001"
+  },
+  "Sales": {
+    "BaseUrl": "http://localhost:5002"
+  },
+  "Search": {
+    "BaseUrl": "http://localhost:5003"
+  }
+}

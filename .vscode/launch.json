@@ -1,0 +1,74 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "CustomersWeb",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}\\microservices-solution\\Customers\\Customers.csproj",
+            "launchConfigurationId": "TargetFramework=;CustomersWeb",
+            "preLaunchTask": "Build: Customers.csproj"
+        },
+        {
+            "name": "CustomersCmd",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}\\microservices-solution\\Customers\\Customers.csproj",
+            "launchConfigurationId": "TargetFramework=;CustomersCmd",
+            "preLaunchTask": "Build: Customers.csproj"
+        },
+         {
+            "name": "ProductsWeb",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}\\microservices-solution\\Products\\Products.csproj",
+            "launchConfigurationId": "TargetFramework=;ProductsWeb"
+        },
+        {
+            "name": "ProductsCmd",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}\\microservices-solution\\Products\\Products.csproj",
+            "launchConfigurationId": "TargetFramework=;ProductsCmd"
+        },
+        {
+            "name": "SalesWeb",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}\\microservices-solution\\Sales\\Sales.csproj",
+            "launchConfigurationId": "TargetFramework=;SalesWeb"
+        },
+         {
+            "name": "SalesCmd",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}\\microservices-solution\\Sales\\Sales.csproj",
+            "launchConfigurationId": "TargetFramework=;SalesCmd"
+        },
+        {
+            "name": "SearchWeb",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}\\microservices-solution\\Search\\Search.csproj",
+            "launchConfigurationId": "TargetFramework=;SearchWeb"
+        },
+         {
+            "name": "SearchCmd",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}\\microservices-solution\\Search\\Search.csproj",
+            "launchConfigurationId": "TargetFramework=;SearchCmd"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Microservices DEV",
+            "configurations": [
+                "CustomersCmd",
+                "ProductsCmd",
+                "SalesCmd",
+                "SearchWeb"
+            ]
+        }
+    ]
+}
