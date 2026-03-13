@@ -1,0 +1,62 @@
+name: Pipeline microservices-solution
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: 
+      image: mcr.microsoft.com/dotnet/sdk:10.0-alpine
+      # Definimos que no queremos el modo "Globalization Invariant"
+      env:
+        DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: false
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies (Git + ICU for Spanish support)
+      # Añadimos icu-libs y tzdata para manejo de zonas horarias y cultura
+      run: apk add --no-cache git icu-libs tzdata
+
+    - name: Restore dependencies
+      run: dotnet restore microservices-solution/microservices-solution.sln
+
+    - name: Build solution
+      run: dotnet build microservices-solution/microservices-solution.sln --no-restore
+
+    - name: Run Customers Tests
+      run: |
+        dotnet test microservices-solution/Customers.Test/Customers.Test.csproj --no-build --verbosity normal \
+        && echo "✅ Customers.Test completado con éxito" \
+        || (echo "❌ Error en Customers.Test" && exit 1)
+
+    - name: Run Products Tests
+      run: |
+        dotnet test microservices-solution/Products.Test/Products.Test.csproj --no-build --verbosity normal \
+        && echo "✅ Products.Test completado con éxito" \
+        || (echo "❌ Error en Products.Test" && exit 1)
+
+    - name: Run Sales Tests
+      run: |
+        dotnet test microservices-solution/Sales.Test/Sales.Test.csproj --no-build --verbosity normal \
+        && echo "✅ Sales.Test completado con éxito" \
+        || (echo "❌ Error en Sales.Test" && exit 1)
+
+    - name: Run Search Tests
+      run: |
+        dotnet test microservices-solution/Search.Test/Search.Test.csproj --no-build --verbosity normal \
+        && echo "✅ Search.Test completado con éxito" \
+        || (echo "❌ Error en Search.Test" && exit 1)
+
+    - name: Pipeline Completion Summary
+      if: success()
+      run: echo "🎉 ¡Pruebas superadas! Pipeline completada en Alpine (ES)."
+
+    - name: Pipeline Failure Summary
+      if: failure()
+      run: |
+        echo "❌ La pipeline ha fallado. Revisa los logs."
+        exit 1
