@@ -10,8 +10,7 @@ namespace Customers.Presentation
     {
         public static void MapCustomerEndpoints(this IEndpointRouteBuilder app)
         {
-            var group = app.MapGroup("/api/customers")
-                .WithName("Customers");
+            var group = app.MapGroup("/api/customers");
 
             group.MapGet("/", async ([FromServices] ICustomerRepository customerRepository) =>
             {
@@ -28,7 +27,7 @@ namespace Customers.Presentation
             group.MapPost("/", async ([FromServices] ICustomerRepository customerRepository, Customer customer) =>
             {
                 await customerRepository.AddAsync(customer);
-                return Results.Created($"/api/customers/{customer.Id}", customer);
+                return Results.Created($"{customer.Id}", customer);
             });
 
             group.MapPut("/{id}", async ([FromServices] ICustomerRepository customerRepository, int id, Customer updatedCustomer) =>

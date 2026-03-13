@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Products.src.Data;
@@ -9,8 +11,7 @@ namespace Products.Presentation
     {
         public static void MapProductEndpoints(this IEndpointRouteBuilder app)
         {
-            var group = app.MapGroup("/api/products")
-                .WithName("Products");
+            var group = app.MapGroup("/api/products");
 
             group.MapGet("/", async ([FromServices] IProductRepository productRepository) =>
             {
@@ -30,6 +31,12 @@ namespace Products.Presentation
 
             group.MapDelete("/{id}", async ([FromServices] IProductRepository productRepository, int id) =>
             {
+            });
+
+            group.MapPost("/filters", async ([FromServices] IProductRepository productRepository, [FromBody] IEnumerable<int> ids) =>
+            {
+                var products = await productRepository.GetProductsByIdAsync(ids);
+                return Results.Ok(products);
             });
         }
     }

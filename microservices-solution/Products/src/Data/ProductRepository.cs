@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using Products.src.Data;
+using System.Threading.Tasks;
 
-namespace Products.Data
+namespace Products.src.Data
 {
     public class ProductRepository : IProductRepository
     {
@@ -19,24 +19,15 @@ namespace Products.Data
             new Product { Id = 10, Name = "Micrófono de Condensador", Price = 120.00m, Description = "Calidad de estudio para podcasts y voz." }
         ];
 
-        public IEnumerable<Product> GetAll()
-        {
-            return _products;
-        }
+        public async Task<IEnumerable<Product>> GetAll() => _products;
 
-        public Product GetById(int id)
-        {
-            return _products.FirstOrDefault(p => p.Id == id);
-        }
+        public async Task<Product> GetById(int id) => _products.FirstOrDefault(p => p.Id == id);
 
-        public void Add(Product product)
-        {
-            _products.Add(product);
-        }
+        public async Task Add(Product product) => _products.Add(product);
 
-        public void Update(Product product)
+        public async Task Update(Product product)
         {
-            var existingProduct = GetById(product.Id);
+            var existingProduct = _products.FirstOrDefault(p => p.Id == product.Id);
             if (existingProduct != null)
             {
                 existingProduct.Name = product.Name;
@@ -45,13 +36,20 @@ namespace Products.Data
             }
         }
 
-        public void Delete(int id)
+        public async Task Delete(int id)
         {
-            var product = GetById(id);
+            var product = _products.FirstOrDefault(p => p.Id == id);
             if (product != null)
             {
                 _products.Remove(product);
             }
         }
+
+        public async Task<IEnumerable<Product>> GetProductsByIdAsync(IEnumerable<int> ids)
+        {
+            var products = _products.Where(p => ids.Contains(p.Id));
+            return products;
+        }
+
     }
 }

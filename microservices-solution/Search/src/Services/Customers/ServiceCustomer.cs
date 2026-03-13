@@ -12,7 +12,7 @@ public class ServiceCustomer(IHttpClientFactory _httpClientFactory) : IServiceCu
     public async Task<IEnumerable<Customer>> GetAllAsync()
     {
         var client = _httpClientFactory.CreateClient("customerApi");
-        var response = await client.GetAsync("/");
+        var response = await client.GetAsync(string.Empty);
         if (response.IsSuccessStatusCode)
         {
             var customerData = await response.Content.ReadFromJsonAsync<IEnumerable<Customer>>();
@@ -25,7 +25,7 @@ public class ServiceCustomer(IHttpClientFactory _httpClientFactory) : IServiceCu
     public async Task<Customer> GetCustomerById(int id)
     {
         var client = _httpClientFactory.CreateClient("customerApi");
-        var response = await client.GetAsync($"/{id}");
+        var response = await client.GetAsync($"{id}");
         if (response.IsSuccessStatusCode)
         {
             var customerData = await response.Content.ReadFromJsonAsync<Customer>();

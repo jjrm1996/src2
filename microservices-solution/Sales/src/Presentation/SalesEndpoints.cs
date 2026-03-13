@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Sales.Data;
 using Sales.Models;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Sales.Presentation
@@ -11,32 +12,45 @@ namespace Sales.Presentation
     {
         public static void MapSalesEndpoints(this IEndpointRouteBuilder app)
         {
-            app.MapGet("/sales", async (ISalesRepository repository) =>
+            var group = app.MapGroup("/api/sales");
+
+            group.MapGet("/", async (ISalesRepository repository) =>
             {
-                return await Task.FromResult(repository.GetAll());
+                var sales = await repository.GetAllAsync();
+                return Results.Ok(sales);
             });
 
-            app.MapGet("/sales/{id}", async (int id, ISalesRepository repository) =>
+            group.MapGet("/{id}", async (int id, ISalesRepository repository) =>
             {
-                var sale = repository.GetById(id);
+                var sale = await repository.GetByIdAsync(id);
                 return sale is not null ? Results.Ok(sale) : Results.NotFound();
             });
 
-            app.MapPost("/sales", async (Sale sale, ISalesRepository repository) =>
+            group.MapGet("/customer/{customerId}", async (int customerId, ISalesRepository repository) =>
             {
-                repository.Add(sale);
-                return Results.Created($"/sales/{sale.Id}", sale);
+                var sales = await repository.GetByCustomerIdAsync(customerId);
+                if (sales == null || !sales.Any())
+                {
+                    return Results.NotFound();
+                }
+                return Results.Ok(sales);
             });
 
-            app.MapPut("/sales", async (Sale updatedSale, ISalesRepository repository) =>
+            group.MapPost("/", async (Sale sale, ISalesRepository repository) =>
             {
-                repository.Update(updatedSale);
+                await repository.AddAsync(sale);
+                return Results.Created($"/api/sales/{sale.Id}", sale);
+            });
+
+            group.MapPut("/", async (Sale updatedSale, ISalesRepository repository) =>
+            {
+                await repository.UpdateAsync(updatedSale);
                 return Results.NoContent();
             });
 
-            app.MapDelete("/sales/{id}", async (int id, ISalesRepository repository) =>
+            group.MapDelete("/{id}", async (int id, ISalesRepository repository) =>
             {
-                repository.Delete(id);
+                await repository.DeleteAsync(id);
                 return Results.NoContent();
             });
         }

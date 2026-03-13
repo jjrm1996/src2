@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Sales.Models;
 
 namespace Sales.Data
@@ -14,15 +15,21 @@ namespace Sales.Data
             new Sale { Id = 5, CustomerId = 5, ProductId = 4, Quantity = 3  },
         ];
 
-        public IEnumerable<Sale> GetAll() => _sales;
+        public async Task<IEnumerable<Sale>> GetAllAsync() => _sales;
 
-        public Sale GetById(int id) => _sales.FirstOrDefault(s => s.Id == id);
+        public async Task<Sale> GetByIdAsync(int id) => _sales.FirstOrDefault(s => s.Id == id);
 
-        public void Add(Sale sale) => _sales.Add(sale);
+        public async Task<IEnumerable<Sale>> GetByCustomerIdAsync(int customerId) => _sales.Where(s => s.CustomerId == customerId);
 
-        public void Update(Sale sale)
+        public async Task AddAsync(Sale sale)
         {
-            var existingSale = GetById(sale.Id);
+            _sales.Add(sale);
+            await Task.CompletedTask;
+        }
+
+        public async Task UpdateAsync(Sale sale)
+        {
+            var existingSale = await GetByIdAsync(sale.Id);
             if (existingSale != null)
             {
                 existingSale.ProductId = sale.ProductId;
@@ -31,9 +38,9 @@ namespace Sales.Data
             }
         }
 
-        public void Delete(int id)
+        public async Task DeleteAsync(int id)
         {
-            var sale = GetById(id);
+            var sale = await GetByIdAsync(id);
             if (sale != null)
             {
                 _sales.Remove(sale);
