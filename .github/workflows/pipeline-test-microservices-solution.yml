@@ -1,62 +1,145 @@
-name: Pipeline microservices-solution
+name: Pipeline Test Microservices Solution
 
 on:
   push:
     branches: [ main ]
+  workflow_dispatch: # Botón para ejecutar manualmente
 
 jobs:
+  # --- JOB 1: COMPILACIÓN Y PRUEBAS EN ALPINE ---
   build:
+    name: Build & Test (Alpine ES)
     runs-on: ubuntu-latest
     container: 
       image: mcr.microsoft.com/dotnet/sdk:10.0-alpine
-      # Definimos que no queremos el modo "Globalization Invariant"
       env:
         DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: false
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Install dependencies (Git + ICU for Spanish support)
-      # Añadimos icu-libs y tzdata para manejo de zonas horarias y cultura
-      run: apk add --no-cache git icu-libs tzdata
+      - name: Install dependencies (Git + ICU Spanish)
+        run: apk add --no-cache git icu-libs tzdata
 
-    - name: Restore dependencies
-      run: dotnet restore microservices-solution/microservices-solution.sln
+      - name: Restore dependencies
+        run: |
+          echo "📦 Iniciando restauración de dependencias..."
+          dotnet restore microservices-solution/microservices-solution.sln || (echo "❌ Error: falló la restauración de dependencias" && exit 1)
 
-    - name: Build solution
-      run: dotnet build microservices-solution/microservices-solution.sln --no-restore
+      - name: Build solution
+        run: |
+          echo "🔨 Iniciando construcción de la solución..."
+          dotnet build microservices-solution/microservices-solution.sln --no-restore || (echo "❌ Error: falló la construcción de la solución" && exit 1)
 
-    - name: Run Customers Tests
-      run: |
-        dotnet test microservices-solution/Customers.Test/Customers.Test.csproj --no-build --verbosity normal \
-        && echo "✅ Customers.Test completado con éxito" \
-        || (echo "❌ Error en Customers.Test" && exit 1)
+      - name: Run Customers Tests
+        run: |
+          echo "🧪 Ejecutando pruebas de Customers.Test..."
+          dotnet test microservices-solution/Customers.Test/Customers.Test.csproj --no-build --verbosity normal \
+          && echo "✅ Customers.Test completado con éxito" \
+          || (echo "❌ Error en Customers.Test - Revisa los logs arriba para más detalles" && exit 1)
 
-    - name: Run Products Tests
-      run: |
-        dotnet test microservices-solution/Products.Test/Products.Test.csproj --no-build --verbosity normal \
-        && echo "✅ Products.Test completado con éxito" \
-        || (echo "❌ Error en Products.Test" && exit 1)
+      - name: Run Products Tests
+        run: |
+          echo "🧪 Ejecutando pruebas de Products.Test..."
+          dotnet test microservices-solution/Products.Test/Products.Test.csproj --no-build --verbosity normal \
+          && echo "✅ Products.Test completado con éxito" \
+          || (echo "❌ Error en Products.Test - Revisa los logs arriba para más detalles" && exit 1)
 
-    - name: Run Sales Tests
-      run: |
-        dotnet test microservices-solution/Sales.Test/Sales.Test.csproj --no-build --verbosity normal \
-        && echo "✅ Sales.Test completado con éxito" \
-        || (echo "❌ Error en Sales.Test" && exit 1)
+      - name: Run Sales Tests
+        run: |
+          echo "🧪 Ejecutando pruebas de Sales.Test..."
+          dotnet test microservices-solution/Sales.Test/Sales.Test.csproj --no-build --verbosity normal \
+          && echo "✅ Sales.Test completado con éxito" \
+          || (echo "❌ Error en Sales.Test - Revisa los logs arriba para más detalles" && exit 1)
 
-    - name: Run Search Tests
-      run: |
-        dotnet test microservices-solution/Search.Test/Search.Test.csproj --no-build --verbosity normal \
-        && echo "✅ Search.Test completado con éxito" \
-        || (echo "❌ Error en Search.Test" && exit 1)
+      - name: Run Search Tests
+        run: |
+          echo "🧪 Ejecutando pruebas de Search.Test..."
+          dotnet test microservices-solution/Search.Test/Search.Test.csproj --no-build --verbosity normal \
+          && echo "✅ Search.Test completado con éxito" \
+          || (echo "❌ Error en Search.Test - Revisa los logs arriba para más detalles" && exit 1)
 
-    - name: Pipeline Completion Summary
-      if: success()
-      run: echo "🎉 ¡Pruebas superadas! Pipeline completada en Alpine (ES)."
+  # --- JOB 2: DESPLIEGUE A PRODUCCIÓN ---
+  deploy:
+    name: Deploy to Production
+    needs: build # IMPORTANTE: Solo se ejecuta si el job 'build' termina con éxito
+    runs-on: ubuntu-latest
+    
+    # Esta es la "pregunta" de seguridad: requiere aprobación manual en GitHub
+    environment: Production
 
-    - name: Pipeline Failure Summary
-      if: failure()
-      run: |
-        echo "❌ La pipeline ha fallado. Revisa los logs."
-        exit 1
+    permissions:
+      contents: read
+      packages: write # Para subir las imágenes a GitHub Packages
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push - Customers Service
+        run: |
+          echo "🐳 Construyendo imagen Docker para Customers..."
+          if [ -f "microservices-solution/Customers/Dockerfile" ]; then
+            docker build -t ghcr.io/${{ github.repository }}/customers-api:latest -t ghcr.io/${{ github.repository }}/customers-api:${{ github.sha }} -f microservices-solution/Customers/Dockerfile . \
+            && docker push ghcr.io/${{ github.repository }}/customers-api:latest \
+            && docker push ghcr.io/${{ github.repository }}/customers-api:${{ github.sha }} \
+            && echo "✅ Customers Service publicado con éxito" \
+            || (echo "❌ Error: falló la construcción o push de Customers" && exit 1)
+          else
+            echo "⚠️ Dockerfile no encontrado para Customers en microservices-solution/Customers/Dockerfile"
+          fi
+
+      - name: Build and Push - Products Service
+        run: |
+          echo "🐳 Construyendo imagen Docker para Products..."
+          if [ -f "microservices-solution/Products/Dockerfile" ]; then
+            docker build -t ghcr.io/${{ github.repository }}/products-api:latest -t ghcr.io/${{ github.repository }}/products-api:${{ github.sha }} -f microservices-solution/Products/Dockerfile . \
+            && docker push ghcr.io/${{ github.repository }}/products-api:latest \
+            && docker push ghcr.io/${{ github.repository }}/products-api:${{ github.sha }} \
+            && echo "✅ Products Service publicado con éxito" \
+            || (echo "❌ Error: falló la construcción o push de Products" && exit 1)
+          else
+            echo "⚠️ Dockerfile no encontrado para Products en microservices-solution/Products/Dockerfile"
+          fi
+
+      - name: Build and Push - Sales Service
+        run: |
+          echo "🐳 Construyendo imagen Docker para Sales..."
+          if [ -f "microservices-solution/Sales/Dockerfile" ]; then
+            docker build -t ghcr.io/${{ github.repository }}/sales-api:latest -t ghcr.io/${{ github.repository }}/sales-api:${{ github.sha }} -f microservices-solution/Sales/Dockerfile . \
+            && docker push ghcr.io/${{ github.repository }}/sales-api:latest \
+            && docker push ghcr.io/${{ github.repository }}/sales-api:${{ github.sha }} \
+            && echo "✅ Sales Service publicado con éxito" \
+            || (echo "❌ Error: falló la construcción o push de Sales" && exit 1)
+          else
+            echo "⚠️ Dockerfile no encontrado para Sales en microservices-solution/Sales/Dockerfile"
+          fi
+
+      - name: Build and Push - Search Service
+        run: |
+          echo "🐳 Construyendo imagen Docker para Search..."
+          if [ -f "microservices-solution/Search/Dockerfile" ]; then
+            docker build -t ghcr.io/${{ github.repository }}/search-api:latest -t ghcr.io/${{ github.repository }}/search-api:${{ github.sha }} -f microservices-solution/Search/Dockerfile . \
+            && docker push ghcr.io/${{ github.repository }}/search-api:latest \
+            && docker push ghcr.io/${{ github.repository }}/search-api:${{ github.sha }} \
+            && echo "✅ Search Service publicado con éxito" \
+            || (echo "❌ Error: falló la construcción o push de Search" && exit 1)
+          else
+            echo "⚠️ Dockerfile no encontrado para Search en microservices-solution/Search/Dockerfile"
+          fi
+
+      - name: Pipeline Completion Summary
+        if: success()
+        run: echo "🎉 Pipeline finalizada exitosamente. Todos los servicios han sido publicados en producción."
+
+      - name: Pipeline Failure Summary
+        if: failure()
+        run: echo "❌ Pipeline falló. Revisa los logs arriba para identificar dónde ocurrió el error."
