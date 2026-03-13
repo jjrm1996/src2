@@ -7,7 +7,7 @@ namespace Products.src.Data;
 public class ProductRepository : IProductRepository
 {
     private readonly List<Product> _products = [
-        new Product { Id = 1, Name = "Laptop Pro 15", Price = 1299.99m, Description = "Potente laptop para desarrollo y diseño." },
+            new Product { Id = 1, Name = "Laptop Pro 15", Price = 1299.99m, Description = "Potente laptop para desarrollo y diseño." },
             new Product { Id = 2, Name = "Mouse Inalámbrico", Price = 25.50m, Description = "Erigonómico y con batería de larga duración." },
             new Product { Id = 3, Name = "Monitor 4K 27", Price = 349.00m, Description = "Resolución Ultra HD con panel IPS." },
             new Product { Id = 4, Name = "Teclado Mecánico", Price = 89.99m, Description = "Interruptores Blue con retroiluminación RGB." },

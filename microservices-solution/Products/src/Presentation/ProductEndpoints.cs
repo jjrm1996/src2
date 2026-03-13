@@ -19,6 +19,8 @@ namespace Products.Presentation
 
             group.MapGet("/{id}", async ([FromServices] IProductRepository productRepository, int id) =>
             {
+                var product = await productRepository.GetById(id);
+                return product is not null ? Results.Ok(product) : Results.NotFound();
             });
 
             group.MapPost("/", async ([FromServices] IProductRepository productRepository, Product product) =>
